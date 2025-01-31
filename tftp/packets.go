@@ -1,5 +1,7 @@
 package tftp
 
+const ackSize = 4
+
 // Ack returns an ACK packet as a byte slice
 //
 // +--------------------------------------+
@@ -32,7 +34,7 @@ func Data(blockNum BlockNum, data []byte) []byte {
 // +------------------------------------------------------------------------------------------------------------+
 // | Opcode (2 bytes) | Filename (ascii bytes) | 0x00 | Mode (ascii bytes) | 0x00 | null terminated option list |
 // +------------------------------------------------------------------------------------------------------------+
-func Wrq(filename string, mode Mode, opts map[Option]OptVal) []byte {
+func Wrq(filename string, mode Mode, opts map[Option]optVal) []byte {
 	b := make([]byte, 0)
 	b = append(b, twoBytes(OpWRQ)...)
 	b = append(b, []byte(filename)...)

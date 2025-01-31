@@ -51,7 +51,7 @@ func (m Mode) bytes() []byte {
 }
 
 const (
-	OptionBlockSize Option = "blocksize"
+	OptionBlockSize Option = "blksize"
 	OptionTimeout   Option = "timeout"
 )
 
@@ -59,34 +59,35 @@ func (o Option) bytes() []byte {
 	return []byte(string(o))
 }
 
-type OptVal interface {
+type optVal interface {
 	optValBytes() []byte
 }
 
 type (
-	OptValBlocksize uint16
-	OptValTimeout   uint8
+	optValBlocksize uint16
+	optValTimeout   uint8
 )
 
-const BlockSizeDefault OptValBlocksize = 512
+const BlockSizeDefault optValBlocksize = 512
 
-func (o OptValBlocksize) optValBytes() []byte {
-	b := make([]byte, 2)
-	binary.LittleEndian.PutUint16(b, uint16(o))
+func (o optValBlocksize) optValBytes() []byte {
+	asciiBlksize := fmt.Sprintf("%d", o)
+	fmt.Printf("asciiBlksize: %s\n", asciiBlksize)
+	b := []byte(asciiBlksize)
 	return b
 }
 
-func (o OptValTimeout) optValBytes() []byte {
+func (o optValTimeout) optValBytes() []byte {
 	return []byte{byte(o)}
 }
 
 type tftpUint16 interface {
-	OpCode | ErrCode | BlockNum | OptValBlocksize
+	OpCode | ErrCode | BlockNum | optValBlocksize
 }
 
 func twoBytes[T tftpUint16](v T) []byte {
 	b := make([]byte, 2)
-	binary.LittleEndian.PutUint16(b, uint16(v))
+	binary.BigEndian.PutUint16(b, uint16(v))
 	return b
 }
 
@@ -94,12 +95,29 @@ func putTwoBytes[T tftpUint16](b []byte, v T) {
 	if len(b) != 2 {
 		panic(fmt.Sprintf("putTwoBytes requires a buffer of 2 bytes, but it got %d", len(b)))
 	}
-	binary.LittleEndian.PutUint16(b, uint16(v))
+	binary.BigEndian.PutUint16(b, uint16(v))
 }
 
 func fromTwoBytes[T tftpUint16](b []byte) T {
 	if len(b) < 2 {
 		panic(fmt.Sprintf("fromTwoBytes requires at least 2 bytes, but it got %d", len(b)))
 	}
-	return T(binary.LittleEndian.Uint16(b))
+	return T(binary.BigEndian.Uint16(b))
+}
+
+type block []byte
+
+func (blk block) String() string {
+	s := "["
+	for i, b := range blk {
+		s = fmt.Sprintf("%s0x%02X", s, b)
+		switch i == len(blk)-1 {
+		case true:
+			s = fmt.Sprintf("%s]", s)
+		case false:
+			s = fmt.Sprintf("%s ", s)
+		}
+	}
+
+	return s
 }
