@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+const TftpPortInit = 69
+
 type (
 	OpCode   uint16
 	ErrCode  uint16
@@ -65,6 +67,8 @@ type (
 	OptValBlocksize uint16
 	OptValTimeout   uint8
 )
+
+const BlockSizeDefault OptValBlocksize = 512
 
 func (o OptValBlocksize) optValBytes() []byte {
 	b := make([]byte, 2)

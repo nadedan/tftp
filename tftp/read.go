@@ -7,8 +7,8 @@ import (
 	"io"
 )
 
-// ReadAck processes to full received buffer with the ACK OpCode and returns the ACKed block num
-func ReadAck(b []byte) (BlockNum, error) {
+// readAck processes to full received buffer with the ACK OpCode and returns the ACKed block num
+func readAck(b []byte) (BlockNum, error) {
 	if len(b) != OpCodeBytes+BlockNumBytes {
 		return 0, fmt.Errorf("ReadAck: ACKs must have %d bytes, got %d", OpCodeBytes+BlockNumBytes, len(b))
 	}
@@ -20,9 +20,9 @@ func ReadAck(b []byte) (BlockNum, error) {
 	return fromTwoBytes[BlockNum](b[2:4]), nil
 }
 
-// ReadOack can read OACK packets and ACK packets. If it gets an OACK packet, it parses and returns the acknowledged options.
+// readOack can read OACK packets and ACK packets. If it gets an OACK packet, it parses and returns the acknowledged options.
 // If it gets an ACK packet, it just returns a nil options map.
-func ReadOack(b []byte) (map[Option]OptVal, error) {
+func readOack(b []byte) (map[Option]OptVal, error) {
 	if len(b) < OpCodeBytes+BlockNumBytes {
 		return nil, fmt.Errorf("ReadOack: must have at least %d bytes, got %d", OpCodeBytes+BlockNumBytes, len(b))
 	}
@@ -74,7 +74,7 @@ READLOOP:
 
 }
 
-func ReadError(b []byte) (ErrCode, string, error) {
+func readError(b []byte) (ErrCode, string, error) {
 	if len(b) < OpCodeBytes+ErrCodeBytes {
 		return 0, "", fmt.Errorf("ReadError: need at least %d byte, got %d", OpCodeBytes+ErrCodeBytes, len(b))
 	}
