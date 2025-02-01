@@ -1,3 +1,3 @@
-module ttftp
+module github.com/nadedan/tftp
 
-go 1.21.1
+go 1.20.2

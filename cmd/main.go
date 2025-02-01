@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"ttftp/tftp"
+	"github.com/nadedan/tftp"
 )
 
 func main() {
@@ -22,7 +22,6 @@ func main() {
 	}
 
 	err = tftp.Put("172.19.0.71", "hello.txt", f, tftp.WithBlocksize(512), tftp.WithTimeoutSeconds(1))
-	//err = tftp.Put("172.19.0.71", "hello.txt", f, tftp.WithTimeoutSeconds(1))
 	if err != nil {
 		fmt.Println(err)
 		return
