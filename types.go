@@ -5,57 +5,52 @@ import (
 	"fmt"
 )
 
-const TftpPortInit = 69
-
 type (
-	OpCode   uint16
-	ErrCode  uint16
-	BlockNum uint16
-	Mode     string
-	Option   string
+	mode     string
+	opCode   uint16
+	errCode  uint16
+	blockNum uint16
+	option   string
 )
 
 const (
-	OpCodeBytes   = 2
-	ErrCodeBytes  = 2
-	BlockNumBytes = 2
+	tftpPortInit  = 69
+	maxRxSize     = 1024
+	opCodeBytes   = 2
+	errCodeBytes  = 2
+	blockNumBytes = 2
 )
 
 const (
-	OpRRQ   OpCode = 1 // Read Request
-	OpWRQ   OpCode = 2 // Write Request
-	OpDATA  OpCode = 3 // Data Packet
-	OpACK   OpCode = 4 // Acknowledgment
-	OpERROR OpCode = 5 // Error Packet
-	OpOACK  OpCode = 6 // Option Acknowledgment (RFC 2347)
+	opRRQ   opCode = 1 // Read Request
+	opWRQ   opCode = 2 // Write Request
+	opDATA  opCode = 3 // Data Packet
+	opACK   opCode = 4 // Acknowledgment
+	opERROR opCode = 5 // Error Packet
+	opOACK  opCode = 6 // Option Acknowledgment (RFC 2347)
 )
 
 const (
-	ErrUndefined       ErrCode = 0 // Not defined, see error message
-	ErrFileNotFound    ErrCode = 1 // File not found
-	ErrAccessViolation ErrCode = 2 // Access violation
-	ErrDiskFull        ErrCode = 3 // Disk full or allocation exceeded
-	ErrIllegalOp       ErrCode = 4 // Illegal TFTP operation
-	ErrUnknownTID      ErrCode = 5 // Unknown transfer ID
-	ErrFileExists      ErrCode = 6 // File already exists
-	ErrNoSuchUser      ErrCode = 7 // No such user
+	errUndefined       errCode = 0 // Not defined, see error message
+	errFileNotFound    errCode = 1 // File not found
+	errAccessViolation errCode = 2 // Access violation
+	errDiskFull        errCode = 3 // Disk full or allocation exceeded
+	errIllegalOp       errCode = 4 // Illegal TFTP operation
+	errUnknownTID      errCode = 5 // Unknown transfer ID
+	errFileExists      errCode = 6 // File already exists
+	errNoSuchUser      errCode = 7 // No such user
 )
 
-const (
-	ModeNetascii Mode = "netascii" // ASCII text mode
-	ModeOctet    Mode = "octet"    // Raw binary mode
-)
-
-func (m Mode) bytes() []byte {
+func (m mode) bytes() []byte {
 	return []byte(string(m))
 }
 
 const (
-	OptionBlockSize Option = "blksize"
-	OptionTimeout   Option = "timeout"
+	optionBlockSize option = "blksize"
+	optionTimeout   option = "timeout"
 )
 
-func (o Option) bytes() []byte {
+func (o option) bytes() []byte {
 	return []byte(string(o))
 }
 
@@ -68,11 +63,10 @@ type (
 	optValTimeout   uint8
 )
 
-const BlockSizeDefault optValBlocksize = 512
+const blockSizeDefault optValBlocksize = 512
 
 func (o optValBlocksize) optValBytes() []byte {
 	asciiBlksize := fmt.Sprintf("%d", o)
-	fmt.Printf("asciiBlksize: %s\n", asciiBlksize)
 	b := []byte(asciiBlksize)
 	return b
 }
@@ -82,7 +76,7 @@ func (o optValTimeout) optValBytes() []byte {
 }
 
 type tftpUint16 interface {
-	OpCode | ErrCode | BlockNum | optValBlocksize
+	opCode | errCode | blockNum | optValBlocksize
 }
 
 func twoBytes[T tftpUint16](v T) []byte {
@@ -103,21 +97,4 @@ func fromTwoBytes[T tftpUint16](b []byte) T {
 		panic(fmt.Sprintf("fromTwoBytes requires at least 2 bytes, but it got %d", len(b)))
 	}
 	return T(binary.BigEndian.Uint16(b))
-}
-
-type block []byte
-
-func (blk block) String() string {
-	s := "["
-	for i, b := range blk {
-		s = fmt.Sprintf("%s0x%02X", s, b)
-		switch i == len(blk)-1 {
-		case true:
-			s = fmt.Sprintf("%s]", s)
-		case false:
-			s = fmt.Sprintf("%s ", s)
-		}
-	}
-
-	return s
 }

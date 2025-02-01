@@ -8,22 +8,22 @@ import (
 
 type client struct {
 	conn      *net.UDPConn
-	opts      map[Option]optVal
+	opts      map[option]optVal
 	blockSize optValBlocksize
-	mode      Mode
+	mode      mode
 	localAddr *net.UDPAddr
 	destAddr  *net.UDPAddr
 	timeout   time.Duration
 }
 
 func newClient(destHostname string) *client {
-	destAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", destHostname, TftpPortInit))
+	destAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", destHostname, tftpPortInit))
 	if err != nil {
 		panic(err)
 	}
 	c := &client{
-		opts:      make(map[Option]optVal),
-		blockSize: BlockSizeDefault,
+		opts:      make(map[option]optVal),
+		blockSize: blockSizeDefault,
 		mode:      ModeOctet,
 		localAddr: &net.UDPAddr{},
 		destAddr:  destAddr,
@@ -51,13 +51,10 @@ func (c *client) send(b []byte) error {
 	if n < len(b) {
 		return fmt.Errorf("%T.send: only wrote %d of %d bytes in buffer", c, n, len(b))
 	}
-
-	fmt.Printf("sent \n%s\n to %s\n", block(b), c.destAddr)
-
 	return nil
 }
 
-func (c *client) recv(r int) (map[OpCode]any, error) {
+func (c *client) recv(r int) (map[opCode]any, error) {
 	b := make([]byte, r)
 	c.conn.SetDeadline(time.Now().Add(c.timeout))
 	n, remoteAddr, err := c.conn.ReadFromUDP(b)
@@ -67,24 +64,24 @@ func (c *client) recv(r int) (map[OpCode]any, error) {
 
 	c.destAddr.Port = remoteAddr.Port
 
-	out := make(map[OpCode]any)
+	out := make(map[opCode]any)
 	b = b[:n]
-	opCode := fromTwoBytes[OpCode](b[0:2])
+	opCode := fromTwoBytes[opCode](b[0:2])
 	switch opCode {
-	case OpACK:
+	case opACK:
 		blockNum, err := readAck(b)
 		if err != nil {
 			return nil, fmt.Errorf("%T.recv: bad ACK: %w", c, err)
 		}
-		out[OpACK] = blockNum
-	case OpOACK:
+		out[opACK] = blockNum
+	case opOACK:
 		opts, err := readOack(b)
 		if err != nil {
 			return nil, fmt.Errorf("%T.recv: bad OACK: %w", c, err)
 		}
 		c.setOpts(opts)
-		out[OpOACK] = opts
-	case OpERROR:
+		out[opOACK] = opts
+	case opERROR:
 		errCode, errMessage, err := readError(b)
 		if err != nil {
 			return nil, fmt.Errorf("%T.recv: bad ERROR: %w", c, err)
@@ -106,15 +103,15 @@ func (c *client) recvOack() error {
 	c.destAddr.Port = remoteAddr.Port
 
 	b = b[:n]
-	opCode := fromTwoBytes[OpCode](b[0:2])
+	opCode := fromTwoBytes[opCode](b[0:2])
 	switch opCode {
-	case OpOACK, OpACK:
+	case opOACK, opACK:
 		opts, err := readOack(b)
 		if err != nil {
 			return fmt.Errorf("%T.recvOack: bad OACK: %w", c, err)
 		}
 		c.setOpts(opts)
-	case OpERROR:
+	case opERROR:
 		errCode, errMessage, err := readError(b)
 		if err != nil {
 			return fmt.Errorf("%T.recvOack: bad ERROR: %w", c, err)
@@ -125,14 +122,13 @@ func (c *client) recvOack() error {
 	return nil
 }
 
-func (c *client) setOpts(opts map[Option]optVal) {
+func (c *client) setOpts(opts map[option]optVal) {
 	c.opts = opts
 	for option, value := range c.opts {
-		fmt.Printf("%s = %+v\n", option, value)
 		switch option {
-		case OptionBlockSize:
+		case optionBlockSize:
 			c.blockSize = value.(optValBlocksize)
-		case OptionTimeout:
+		case optionTimeout:
 			c.timeout = time.Duration(value.(optValTimeout)) * time.Second
 		}
 	}
